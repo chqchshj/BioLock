@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleShortVersionString</key>
+	<string>1.2.0</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.batues.biolock.prefs</string>
+	<key>MinimumOSVersion</key>
+	<string>15.0</string>
+	<key>CFBundleName</key>
+	<string>BioLock</string>
+	<key>CFBundleIconFile</key>
+	<string>BioLockIcon</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>English</string>
+	<key>NSPrincipalClass</key>
+	<string>BLPRootListController</string>
+	<key>CFBundleExecutable</key>
+	<string>biolockprefs</string>
+	<key>CFBundlePackageType</key>
+	<string>BNDL</string>
+	<key>CFBundleVersion</key>
+	<string>1.2</string>
+</dict>
+</plist>

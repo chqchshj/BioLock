@@ -1,0 +1,114 @@
+name: Build BioLock
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Theos
+        run: |
+          bash -c "$(curl -fsSL https://raw.githubusercontent.com/theos/theos/master/bin/install-theos)" 2>&1 || true
+          cd $HOME/theos && git submodule update --init --recursive 2>&1 || true
+
+      - name: Install iOS 16.5 SDK with PrivateFrameworks
+        run: |
+          THEOS=$HOME/theos
+          rm -rf $THEOS/sdks/*.sdk
+          curl -L -o /tmp/sdks.zip "https://github.com/theos/sdks/archive/refs/heads/master.zip"
+          unzip -qo /tmp/sdks.zip -d /tmp/sdks_extract
+          cp -rf /tmp/sdks_extract/sdks-master/iPhoneOS16.5.sdk $THEOS/sdks/
+          ln -sf $THEOS/sdks/iPhoneOS16.5.sdk $THEOS/sdks/iPhoneOS.sdk
+          XCODE_SDK=$(xcrun --sdk iphoneos --show-sdk-path 2>/dev/null || echo "")
+          if [ -n "$XCODE_SDK" ] && [ -d "$XCODE_SDK/System/Library" ]; then
+            mkdir -p "$XCODE_SDK/System/Library/PrivateFrameworks"
+            cp -rf $THEOS/sdks/iPhoneOS16.5.sdk/System/Library/PrivateFrameworks/Preferences.framework "$XCODE_SDK/System/Library/PrivateFrameworks/" 2>/dev/null || true
+            echo "Copied Preferences.framework to Xcode SDK: $XCODE_SDK"
+          fi
+          echo "=== Verify ==="
+          ls $THEOS/sdks/iPhoneOS16.5.sdk/System/Library/PrivateFrameworks/Preferences.framework/
+
+      - name: Build AltList stub framework
+        run: |
+          mkdir -p /tmp/altlist_stub
+          cat > /tmp/altlist_stub/stub.m << 'STUBEOF'
+          #import <Foundation/Foundation.h>
+          @interface ATLApplicationSection : NSObject
+          @end
+          @implementation ATLApplicationSection
+          @end
+          @interface ATLApplicationListControllerBase : NSObject
+          @end
+          @implementation ATLApplicationListControllerBase
+          @end
+          @interface ATLApplicationListMultiSelectionController : NSObject
+          @end
+          @implementation ATLApplicationListMultiSelectionController
+          @end
+          STUBEOF
+          
+          THEOS=$HOME/theos
+          SDK=$(xcrun --sdk iphoneos --show-sdk-path)
+          CLANG=$(xcrun --sdk iphoneos -f clang)
+          
+          mkdir -p $GITHUB_WORKSPACE/Frameworks/AltList.framework
+          
+          $CLANG -arch arm64 -isysroot $SDK -miphoneos-version-min=15.0 \
+            -fobjc-arc -dynamiclib -install_name @rpath/AltList.framework/AltList \
+            /tmp/altlist_stub/stub.m -o /tmp/altlist_arm64 \
+            -framework Foundation 2>&1
+          
+          $CLANG -arch arm64e -isysroot $SDK -miphoneos-version-min=15.0 \
+            -fobjc-arc -dynamiclib -install_name @rpath/AltList.framework/AltList \
+            /tmp/altlist_stub/stub.m -o /tmp/altlist_arm64e \
+            -framework Foundation 2>&1
+          
+          lipo -create /tmp/altlist_arm64 /tmp/altlist_arm64e -output \
+            $GITHUB_WORKSPACE/Frameworks/AltList.framework/AltList
+          
+          THEOS=$HOME/theos
+          cp -r $GITHUB_WORKSPACE/Frameworks/AltList.framework $THEOS/sdks/iPhoneOS16.5.sdk/System/Library/Frameworks/
+          
+          echo "=== AltList stub framework ==="
+          file $GITHUB_WORKSPACE/Frameworks/AltList.framework/AltList
+          ls -la $GITHUB_WORKSPACE/Frameworks/AltList.framework/
+          ls -la $THEOS/sdks/iPhoneOS16.5.sdk/System/Library/Frameworks/AltList.framework/
+
+      - name: Install ldid
+        run: |
+          curl -L -o /tmp/ldid https://github.com/ProcursusTeam/ldid/releases/latest/download/ldid_macos_arm64
+          chmod +x /tmp/ldid
+          /tmp/ldid --version || echo "ldid installed"
+
+      - name: Build
+        run: |
+          export THEOS=$HOME/theos
+          export PATH="$THEOS/bin:$PATH"
+          export SDKVERSION=16.5
+          make package FINALPACKAGE=1 2>&1
+          
+          echo "=== Signing dylib ==="
+          /tmp/ldid -S packages/*.deb 2>&1 || true
+
+      - name: Upload .deb
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: BioLock-arm64e-deb
+          path: packages/*.deb
+
+      - name: Create Release
+        if: success()
+        uses: softprops/action-gh-release@v2
+        with:
+          files: packages/*.deb
+          tag_name: build-${{ github.run_number }}
+          name: BioLock Build ${{ github.run_number }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

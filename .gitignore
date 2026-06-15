@@ -1,0 +1,6 @@
+.ignore
+*.d
+*.o
+*.deb
+packages/
+.theos/

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>items</key>
+	<array>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Face ID 应用锁</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSLinkListCell</string>
+			<key>defaults</key>
+			<string>com.batues.biolock</string>
+			<key>key</key>
+			<string>ProtectedApps</string>
+			<key>detail</key>
+			<string>ATLApplicationListMultiSelectionController</string>
+			<key>label</key>
+			<string>选择应用</string>
+			<key>defaultApplicationSwitchValue</key>
+			<false/>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<true/>
+			<key>defaults</key>
+			<string>com.batues.biolock</string>
+			<key>key</key>
+			<string>Enabled</string>
+			<key>label</key>
+			<string>启用插件</string>
+			<key>PostNotification</key>
+			<string>com.batues.biolock/ReloadPrefs</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<true/>
+			<key>defaults</key>
+			<string>com.batues.biolock</string>
+			<key>key</key>
+			<string>AllowPasscode</string>
+			<key>label</key>
+			<string>允许使用密码</string>
+			<key>PostNotification</key>
+			<string>com.batues.biolock/ReloadPrefs</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<true/>
+			<key>defaults</key>
+			<string>com.batues.biolock</string>
+			<key>key</key>
+			<string>VibrateOnFail</string>
+			<key>label</key>
+			<string>失败时震动</string>
+			<key>PostNotification</key>
+			<string>com.batues.biolock/ReloadPrefs</string>
+		</dict>
+	</array>
+	<key>title</key>
+	<string>Face ID 应用锁</string>
+</dict>
+</plist>
