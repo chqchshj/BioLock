@@ -1,6 +1,5 @@
 #import "BLPAppListController.h"
 #import <Preferences/PSSpecifier.h>
-#import <Preferences/PSTableCell.h>
 
 @implementation BLPAppListController
 
@@ -61,32 +60,6 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.title = @"选择应用";
-    
-    self.searchBar = [[UISearchBar alloc] initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width, 56)];
-    self.searchBar.placeholder = @"搜索应用名称";
-    self.searchBar.delegate = self;
-    self.searchBar.autocapitalizationType = UITextAutocapitalizationTypeNone;
-    self.searchBar.autocorrectionType = UITextAutocorrectionTypeNo;
-    [self table].tableHeaderView = self.searchBar;
-}
-
-- (void)searchBar:(UISearchBar *)searchBar textDidChange:(NSString *)searchText {
-    if (searchText.length == 0) {
-        self.filteredApps = self.allApps;
-    } else {
-        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"name CONTAINS[cd] %@", searchText];
-        self.filteredApps = [self.allApps filteredArrayUsingPredicate:predicate];
-    }
-    _specifiers = nil;
-    [self reloadSpecifiers];
-}
-
-- (void)searchBarSearchButtonClicked:(UISearchBar *)searchBar {
-    [searchBar resignFirstResponder];
-}
-
-- (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView {
-    [self.searchBar resignFirstResponder];
 }
 
 - (id)getProtectedForSpecifier:(PSSpecifier *)specifier {
