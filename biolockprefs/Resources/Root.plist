@@ -12,17 +12,11 @@
 		</dict>
 		<dict>
 			<key>cell</key>
-			<string>PSLinkListCell</string>
-			<key>defaults</key>
-			<string>com.batues.biolock</string>
-			<key>key</key>
-			<string>ProtectedApps</string>
-			<key>detail</key>
-			<string>ATLApplicationListMultiSelectionController</string>
+			<string>PSButtonCell</string>
 			<key>label</key>
 			<string>选择应用</string>
-			<key>defaultApplicationSwitchValue</key>
-			<false/>
+			<key>action</key>
+			<string>openAppList:</string>
 		</dict>
 		<dict>
 			<key>cell</key>

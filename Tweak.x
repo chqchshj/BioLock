@@ -38,6 +38,8 @@ static NSMutableDictionary<NSString *, NSDate *> *gAuthCache = nil;
 static NSMutableSet<NSString *> *gInTransition = nil;
 static dispatch_queue_t gAuthQueue = nil;
 
+static BOOL gInitialized = NO;
+
 #pragma mark - App List Cache
 
 static void CacheAppList() {
@@ -77,11 +79,9 @@ static void CacheAppList() {
 
 static void LoadPrefs() {
 	@autoreleasepool {
-		
 		NSString *prefsPath = @"/var/mobile/Library/Preferences/com.batues.biolock.plist";
 		NSDictionary *prefs = [NSDictionary dictionaryWithContentsOfFile:prefsPath];
 
-		
 		if (!prefs) {
 			CFStringRef appID = (__bridge CFStringRef)kPrefsID;
 			CFPreferencesAppSynchronize(appID);
@@ -98,12 +98,10 @@ static void LoadPrefs() {
 		gAuthCacheDuration = [prefs[@"AuthCacheDuration"] integerValue];
 		gCustomPrompt = [prefs[@"CustomPrompt"] copy];
 
-		
 		id protected = prefs[@"ProtectedApps"];
 		if ([protected isKindOfClass:[NSArray class]]) {
 			gProtectedApps = [NSSet setWithArray:protected];
 		} else if ([protected isKindOfClass:[NSDictionary class]]) {
-			
 			gProtectedApps = [NSSet setWithArray:[protected allKeys]];
 		}
 
@@ -135,15 +133,33 @@ static BOOL IsAuthCached(NSString *bundleID) {
 	return valid;
 }
 
+static void EnsureInitialized() {
+	if (gInitialized) return;
+	gInitialized = YES;
+
+	gAuthQueue = dispatch_queue_create("com.batues.biolock.queue", DISPATCH_QUEUE_SERIAL);
+	gAuthCache = [[NSMutableDictionary alloc] init];
+	gInTransition = [[NSMutableSet alloc] init];
+
+	LoadPrefs();
+
+	dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
+		CacheAppList();
+	});
+
+	CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, HandlePrefsChanged, CFSTR("com.batues.biolock/ReloadPrefs"), NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
+	CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, HandleClearCache, CFSTR("com.batues.biolock/ClearCache"), NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
+}
+
 #pragma mark - Hooks
 
 %hook SBUIController
 
 - (void)activateApplication:(id)app fromIcon:(id)icon location:(long long)location activationSettings:(id)settings actions:(id)actions {
+	EnsureInitialized();
+
 	SBApplication *sbApp = (SBApplication *)app;
 	NSString *bundleID = [sbApp bundleIdentifier];
-
-	NSLog(@"[BioLock] activateApplication called for %@, enabled=%d, protected=%d", bundleID, gEnabled, [gProtectedApps containsObject:bundleID]);
 
 	if (!gEnabled || !bundleID || ![gProtectedApps containsObject:bundleID]) {
 		%orig;
@@ -201,18 +217,4 @@ static BOOL IsAuthCached(NSString *bundleID) {
 #pragma mark - Constructor
 
 %ctor {
-	NSLog(@"[BioLock] Tweak loaded into SpringBoard");
-	gAuthQueue = dispatch_queue_create("com.batues.biolock.queue", DISPATCH_QUEUE_SERIAL);
-	gAuthCache = [[NSMutableDictionary alloc] init];
-	gInTransition = [[NSMutableSet alloc] init];
-
-	LoadPrefs();
-
-	// Cache app list in background
-	dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
-		CacheAppList();
-	});
-
-	CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, HandlePrefsChanged, CFSTR("com.batues.biolock/ReloadPrefs"), NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
-	CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, HandleClearCache, CFSTR("com.batues.biolock/ClearCache"), NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
 }

@@ -1,4 +1,5 @@
 #import "BLPRootListController.h"
+#import "BLPAppListController.h"
 #import <Preferences/PSSpecifier.h>
 #import <AudioToolbox/AudioServices.h>
 #import <CoreFoundation/CFNotificationCenter.h>
@@ -26,6 +27,11 @@
     }
 }
 
+- (void)openAppList:(id)sender {
+    BLPAppListController *appListVC = [[BLPAppListController alloc] init];
+    [self.navigationController pushViewController:appListVC animated:YES];
+}
+
 - (void)clearAuthCache:(id)sender {
     UIAlertController *alert =
     [UIAlertController alertControllerWithTitle:@"清除缓存"
@@ -42,11 +48,8 @@
         CFNotificationCenterPostNotification(
             CFNotificationCenterGetDarwinNotifyCenter(),
             CFSTR("com.batues.biolock/ClearCache"),
-            NULL,
-            NULL,
-            YES
+            NULL, NULL, YES
         );
-
         [self showCompletionAlert:@"身份验证缓存已清除。"];
     }]];
 
@@ -75,9 +78,7 @@
         CFNotificationCenterPostNotification(
             CFNotificationCenterGetDarwinNotifyCenter(),
             CFSTR("com.batues.biolock/ReloadPrefs"),
-            NULL,
-            NULL,
-            YES
+            NULL, NULL, YES
         );
 
         [self reloadSpecifiers];
@@ -85,14 +86,6 @@
     }]];
 
     [self presentViewController:alert animated:YES completion:nil];
-}
-
-- (void)openGitHub:(id)sender {
-    NSString *urlString = @"https://github.com/chqchshj/BioLock";
-    NSURL *url = [NSURL URLWithString:urlString];
-    if (url) {
-        [[UIApplication sharedApplication] openURL:url options:@{} completionHandler:nil];
-    }
 }
 
 - (void)showCompletionAlert:(NSString *)message {
