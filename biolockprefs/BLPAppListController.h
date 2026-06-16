@@ -1,7 +1,7 @@
-#import <Preferences/PSListController.h>
-#import <Preferences/PSSpecifier.h>
+#import <UIKit/UIKit.h>
 
-@interface BLPAppListController : PSListController
+@interface BLPAppListController : UITableViewController <UISearchBarDelegate>
 @property (nonatomic, strong) NSArray *allApps;
 @property (nonatomic, strong) NSArray *filteredApps;
+@property (nonatomic, strong) UISearchBar *searchBar;
 @end
